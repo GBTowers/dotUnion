@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<Nullable>enable</Nullable>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageId>dotUnion</PackageId>
+		<Authors>GBTowers</Authors>
+		<Product>dotUnion</Product>
+		<Version>1.0.0-alpha</Version>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\dotUnion.Analyzers\dotUnion.Analyzers\dotUnion.Analyzers.csproj" PrivateAssets="All"/>
+		<ProjectReference Include="..\dotUnion.SourceGenerator\dotUnion.SourceGenerator.csproj" PrivateAssets="All"/>
+		<None Update="dotUnion.props" Visible="false" Pack="true" PackagePath="build"/>
+		<ProjectReference Include="..\dotUnion.Analyzers\dotUnion.CodeFixes\dotUnion.CodeFixes.csproj" PrivateAssets="All"/>
+		<None Update="README.md">
+		  <Pack>true</Pack>
+		  <PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+
+	<ItemGroup>
+		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
+
+		<None Include="$(OutputPath)\dotUnion.SourceGenerator.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
+		<None Include="$(OutputPath)\dotUnion.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
+		<None Include="$(OutputPath)\dotUnion.CodeFixes.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
+
+		<None Include="$(OutputPath)\dotUnion.Attributes.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
+		<None Include="$(OutputPath)\dotUnion.Attributes.dll" Pack="true" PackagePath="lib\netstandard2.0" Visible="true"/>
+
+	</ItemGroup>
+
+</Project>

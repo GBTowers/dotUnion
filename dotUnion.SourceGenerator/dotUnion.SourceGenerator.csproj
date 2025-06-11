@@ -2,7 +2,6 @@
 
 	<PropertyGroup>
 		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
 		<ImplicitUsings>true</ImplicitUsings>
@@ -10,20 +9,8 @@
 		<Nullable>enable</Nullable>
 		
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<PackageId>dotUnion</PackageId>
-		<Authors>GBTowers</Authors>
-		<Product>dotUnion</Product>
-		<Version>1.0.0</Version>
 	</PropertyGroup>
-
-	<PropertyGroup>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<None Include="README.md" Pack="true" PackagePath="\"/>
-	</ItemGroup>
+	
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="4.14.0">

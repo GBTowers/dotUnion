@@ -17,6 +17,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="coverlet.collector" Version="6.0.2"/>
+		<PackageReference Include="dotUnion" Version="1.0.0-alpha" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0"/>
 		<PackageReference Include="xunit" Version="2.9.2"/>
 		<PackageReference Include="xunit.runner.visualstudio" Version="2.8.2"/>
@@ -25,11 +26,5 @@
 	<ItemGroup>
 		<Using Include="Xunit"/>
 	</ItemGroup>
-
-	<ItemGroup>
-	  <ProjectReference Include="..\dotUnion.Attributes\dotUnion.Attributes.csproj" OutputItemType="Analyzer" />
-	  <ProjectReference Include="..\dotUnion.SourceGenerator\dotUnion.SourceGenerator.csproj" OutputItemType="Analyzer" />
-	</ItemGroup>
-
 
 </Project>
