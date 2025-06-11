@@ -8,6 +8,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotUnion.Tests", "dotUnion.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotUnion.Integration", "dotUnion.Integration\dotUnion.Integration.csproj", "{AC146213-87ED-488C-AE6F-81B2D67F1DF7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotUnion.Analyzers", "dotUnion.Analyzers\dotUnion.Analyzers\dotUnion.Analyzers.csproj", "{B1A17E20-A393-4C65-A832-B32CADFE5DC2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Analyzers", "Analyzers", "{9D45CF24-A1D6-4728-8E99-A0CF1D07D53B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotUnion.Analyzers.Tests", "dotUnion.Analyzers\dotUnion.Analyzers.Tests\dotUnion.Analyzers.Tests.csproj", "{5075CC00-7752-4897-8C28-C25D642D2042}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotUnion.CodeFixes", "dotUnion.Analyzers\dotUnion.CodeFixes\dotUnion.CodeFixes.csproj", "{78741AC6-35A7-4821-A36F-460B0A0EFC66}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +38,22 @@ Global
 		{AC146213-87ED-488C-AE6F-81B2D67F1DF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC146213-87ED-488C-AE6F-81B2D67F1DF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC146213-87ED-488C-AE6F-81B2D67F1DF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1A17E20-A393-4C65-A832-B32CADFE5DC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1A17E20-A393-4C65-A832-B32CADFE5DC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1A17E20-A393-4C65-A832-B32CADFE5DC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1A17E20-A393-4C65-A832-B32CADFE5DC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5075CC00-7752-4897-8C28-C25D642D2042}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5075CC00-7752-4897-8C28-C25D642D2042}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5075CC00-7752-4897-8C28-C25D642D2042}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5075CC00-7752-4897-8C28-C25D642D2042}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78741AC6-35A7-4821-A36F-460B0A0EFC66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78741AC6-35A7-4821-A36F-460B0A0EFC66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78741AC6-35A7-4821-A36F-460B0A0EFC66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78741AC6-35A7-4821-A36F-460B0A0EFC66}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B1A17E20-A393-4C65-A832-B32CADFE5DC2} = {9D45CF24-A1D6-4728-8E99-A0CF1D07D53B}
+		{5075CC00-7752-4897-8C28-C25D642D2042} = {9D45CF24-A1D6-4728-8E99-A0CF1D07D53B}
+		{78741AC6-35A7-4821-A36F-460B0A0EFC66} = {9D45CF24-A1D6-4728-8E99-A0CF1D07D53B}
 	EndGlobalSection
 EndGlobal
