@@ -9,8 +9,10 @@ namespace dotUnion.SourceGenerator.Composers;
 
 public static class AritySourceComposer
 {
-	public static void BuildArity(SourceProductionContext context, FakeUnion fakeUnion)
+	public static void BuildArity(SourceProductionContext context, (FakeUnion, GeneratorOptions) input)
 	{
+		(FakeUnion fakeUnion, GeneratorOptions options) = input;
+
 		using var output = new StringWriter();
 		using var writer = new IndentedTextWriter(writer: output, tabString: "\t");
 
@@ -22,7 +24,10 @@ public static class AritySourceComposer
 		writer.WriteLine("namespace dotUnion;");
 		writer.WriteLine();
 
-		writer.WriteLine("[global::System.CodeDom.Compiler.GeneratedCodeAttribute(\"dotUnion.SourceGenerator\", \"1.0.0\")]");
+		writer.WriteLine(
+			"[global::System.CodeDom.Compiler.GeneratedCodeAttribute(\"dotUnion.SourceGenerator\", \"1.0.0\")]"
+		);
+
 		writer.WriteLine($"public abstract record {fakeUnion.Declaration}");
 		writer.Indent++;
 		writer.WriteLine(fakeUnion.WhereClauses);
@@ -42,8 +47,7 @@ public static class AritySourceComposer
 
 		// MatchAsync
 		writer.WriteLine(
-			$"public Task<TOut> MatchAsync<TOut>({fakeUnion.ArityMembers.JoinSelect(m => $"{m.AsyncFuncDeclaration} {m.FuncName}")
-			}) =>"
+			$"public Task<TOut> MatchAsync<TOut>({fakeUnion.ArityMembers.JoinSelect(m => $"{m.AsyncFuncDeclaration} {m.FuncName}")}) =>"
 		);
 
 		writer.WriteSwitchExpression(arityMembers: fakeUnion.ArityMembers, isMatch: true);
@@ -61,7 +65,10 @@ public static class AritySourceComposer
 	#region Switch
 
 		// Switch
-		writer.WriteLine($"public void Switch({fakeUnion.ArityMembers.JoinSelect(m => $"{m.ActDeclaration} {m.ActName}")})");
+		writer.WriteLine(
+			$"public void Switch({fakeUnion.ArityMembers.JoinSelect(m => $"{m.ActDeclaration} {m.ActName}")})"
+		);
+
 		writer.WriteLine('{');
 		writer.Indent++;
 		writer.WriteLine("switch (this)");
@@ -99,8 +106,216 @@ public static class AritySourceComposer
 
 		writer.WriteLine();
 
+		if (options.GenerateAsyncExtensions) WriteAsyncExtensions(writer, fakeUnion);
+
 		string generatedFileName = $"Union.T{fakeUnion.Arity}.g." + $"cs";
 		context.AddSource(hintName: generatedFileName, source: output.ToString());
+	}
+
+	private static void WriteAsyncExtensions(IndentedTextWriter writer, FakeUnion fakeUnion)
+	{
+		writer.WriteLine($"public static class UnionT{fakeUnion.Arity}Ex");
+		writer.WriteLine('{');
+		writer.Indent++;
+
+		// Task
+
+		// Match
+
+		writer.WriteLine(
+			$"public static async Task<TOut> Match<{fakeUnion.MatchTypeParams}>("
+		+ $"this Task<{fakeUnion.Declaration}> task, "
+		+ fakeUnion.ArityMembers.JoinSelect(m => $"{m.FuncDeclaration} {m.FuncName}")
+		+ ')'
+		);
+
+		writer.WriteLine(fakeUnion.WhereClauses);
+		
+		writer.WriteLine(
+			$"=> (await task.ConfigureAwait(false)).Match({fakeUnion.ArityMembers.JoinSelect(m => m.FuncName)});"
+		);
+
+		writer.WriteLine();
+
+
+		writer.WriteLine(
+			$"public static async Task<TOut> MatchAsync<{fakeUnion.MatchTypeParams}>("
+		+ $"this Task<{fakeUnion.Declaration}> task, "
+		+ fakeUnion.ArityMembers.JoinSelect(m => $"{m.AsyncFuncDeclaration} {m.FuncName}")
+		+ ')'
+		);
+
+		writer.WriteLine(fakeUnion.WhereClauses);
+		
+		writer.WriteLine(
+			$"=> await (await task.ConfigureAwait(false)).MatchAsync({fakeUnion.ArityMembers.JoinSelect(m => m.FuncName)}).ConfigureAwait(false);"
+		);
+
+		writer.WriteLine();
+
+
+		writer.WriteLine(
+			$"public static async ValueTask<TOut> MatchAsyncValue<{fakeUnion.MatchTypeParams}>("
+		+ $"this Task<{fakeUnion.Declaration}> task, "
+		+ fakeUnion.ArityMembers.JoinSelect(m => $"{m.AsyncValueFuncDeclaration} {m.FuncName}")
+		+ ')'
+		);
+
+		writer.WriteLine(fakeUnion.WhereClauses);
+		
+		writer.WriteLine(
+			$"=> await (await task.ConfigureAwait(false)).MatchAsyncValue({fakeUnion.ArityMembers.JoinSelect(m => m.FuncName)}).ConfigureAwait(false);"
+		);
+
+		writer.WriteLine();
+
+		// Switch
+
+		writer.WriteLine(
+			$"public static async Task Switch<{fakeUnion.TypeParameters}>("
+		+ $"this Task<{fakeUnion.Declaration}> task, "
+		+ fakeUnion.ArityMembers.JoinSelect(m => $"{m.ActDeclaration} {m.ActName}")
+		+ ')'
+		);
+
+		writer.WriteLine(fakeUnion.WhereClauses);
+		
+		writer.WriteLine(
+			$"=> (await task.ConfigureAwait(false)).Switch({fakeUnion.ArityMembers.JoinSelect(m => m.ActName)});"
+		);
+
+		writer.WriteLine();
+
+		writer.WriteLine(
+			$"public static async Task SwitchAsync<{fakeUnion.TypeParameters}>("
+		+ $"this Task<{fakeUnion.Declaration}> task, "
+		+ fakeUnion.ArityMembers.JoinSelect(m => $"{m.AsyncActDeclaration} {m.ActName}")
+		+ ')'
+		);
+
+		writer.WriteLine(fakeUnion.WhereClauses);
+		
+		writer.WriteLine(
+			$"=> await (await task.ConfigureAwait(false)).SwitchAsync({fakeUnion.ArityMembers.JoinSelect(m => m.ActName)}).ConfigureAwait(false);"
+		);
+
+		writer.WriteLine();
+
+		writer.WriteLine(
+			$"public static async ValueTask SwitchAsyncValue<{fakeUnion.TypeParameters}>("
+		+ $"this Task<{fakeUnion.Declaration}> task, "
+		+ fakeUnion.ArityMembers.JoinSelect(m => $"{m.AsyncValueActDeclaration} {m.ActName}")
+		+ ')'
+		);
+
+		writer.WriteLine(fakeUnion.WhereClauses);
+		
+		writer.WriteLine(
+			$"=> await (await task.ConfigureAwait(false)).SwitchAsyncValue({fakeUnion.ArityMembers.JoinSelect(m => m.ActName)}).ConfigureAwait(false);"
+		);
+
+		writer.WriteLine();
+
+		// ValueTask
+
+		// Match
+
+		writer.WriteLine(
+			$"public static async ValueTask<TOut> Match<{fakeUnion.MatchTypeParams}>("
+		+ $"this ValueTask<{fakeUnion.Declaration}> task, "
+		+ fakeUnion.ArityMembers.JoinSelect(m => $"{m.FuncDeclaration} {m.FuncName}")
+		+ ')'
+		);
+
+		writer.WriteLine(fakeUnion.WhereClauses);
+		
+		writer.WriteLine(
+			$"=> (await task.ConfigureAwait(false)).Match({fakeUnion.ArityMembers.JoinSelect(m => m.FuncName)});"
+		);
+
+		writer.WriteLine();
+
+
+		writer.WriteLine(
+			$"public static async Task<TOut> MatchAsync<{fakeUnion.MatchTypeParams}>("
+		+ $"this ValueTask<{fakeUnion.Declaration}> task, "
+		+ fakeUnion.ArityMembers.JoinSelect(m => $"{m.AsyncFuncDeclaration} {m.FuncName}")
+		+ ')'
+		);
+
+		writer.WriteLine(fakeUnion.WhereClauses);
+		
+		writer.WriteLine(
+			$"=> await (await task.ConfigureAwait(false)).MatchAsync({fakeUnion.ArityMembers.JoinSelect(m => m.FuncName)}).ConfigureAwait(false);"
+		);
+
+		writer.WriteLine();
+
+
+		writer.WriteLine(
+			$"public static async ValueTask<TOut> MatchAsyncValue<{fakeUnion.MatchTypeParams}>("
+		+ $"this ValueTask<{fakeUnion.Declaration}> task, "
+		+ fakeUnion.ArityMembers.JoinSelect(m => $"{m.AsyncValueFuncDeclaration} {m.FuncName}")
+		+ ')'
+		);
+
+		writer.WriteLine(fakeUnion.WhereClauses);
+		
+		writer.WriteLine(
+			$"=> await (await task.ConfigureAwait(false)).MatchAsyncValue({fakeUnion.ArityMembers.JoinSelect(m => m.FuncName)}).ConfigureAwait(false);"
+		);
+
+		writer.WriteLine();
+
+		// Switch
+
+		writer.WriteLine(
+			$"public static async ValueTask Switch<{fakeUnion.TypeParameters}>("
+		+ $"this ValueTask<{fakeUnion.Declaration}> task, "
+		+ fakeUnion.ArityMembers.JoinSelect(m => $"{m.ActDeclaration} {m.ActName}")
+		+ ')'
+		);
+
+		writer.WriteLine(fakeUnion.WhereClauses);
+		
+		writer.WriteLine(
+			$"=> (await task.ConfigureAwait(false)).Switch({fakeUnion.ArityMembers.JoinSelect(m => m.ActName)});"
+		);
+
+		writer.WriteLine();
+
+		writer.WriteLine(
+			$"public static async Task SwitchAsync<{fakeUnion.TypeParameters}>("
+		+ $"this ValueTask<{fakeUnion.Declaration}> task, "
+		+ fakeUnion.ArityMembers.JoinSelect(m => $"{m.AsyncActDeclaration} {m.ActName}")
+		+ ')'
+		);
+
+		writer.WriteLine(fakeUnion.WhereClauses);
+		
+		writer.WriteLine(
+			$"=> await (await task.ConfigureAwait(false)).SwitchAsync({fakeUnion.ArityMembers.JoinSelect(m => m.ActName)}).ConfigureAwait(false);"
+		);
+
+		writer.WriteLine();
+
+		writer.WriteLine(
+			$"public static async ValueTask SwitchAsyncValue<{fakeUnion.TypeParameters}>("
+		+ $"this ValueTask<{fakeUnion.Declaration}> task, "
+		+ fakeUnion.ArityMembers.JoinSelect(m => $"{m.AsyncValueActDeclaration} {m.ActName}")
+		+ ')'
+		);
+
+		writer.WriteLine(fakeUnion.WhereClauses);
+		
+		writer.WriteLine(
+			$"=> await (await task.ConfigureAwait(false)).SwitchAsyncValue({fakeUnion.ArityMembers.JoinSelect(m => m.ActName)}).ConfigureAwait(false);"
+		);
+
+		writer.WriteLine();
+
+		writer.Indent--;
+		writer.WriteLine('}');
 	}
 
 	private static void WriteSwitchExpression(

@@ -10,7 +10,7 @@ public static class UnionSourceComposer
 {
 	public static void BuildUnion(SourceProductionContext context, (UnionTarget, GeneratorOptions) input)
 	{
-		(UnionTarget? unionModel, GeneratorOptions? options) = input;
+		(UnionTarget unionModel, GeneratorOptions options) = input;
 
 		if (unionModel is null) return;
 
@@ -43,7 +43,7 @@ public static class UnionSourceComposer
 
 		StringBuilder? qualificationBuilder = null;
 
-		if (options.GenerateAsyncExtensions || unionModel.GenerateAsyncExtensions)
+		if (options.GenerateAsyncExtensions)
 		{
 			qualificationBuilder = new StringBuilder();
 			writer.WriteLine("using System.Threading.Tasks;");
@@ -62,21 +62,15 @@ public static class UnionSourceComposer
 			qualificationBuilder?.Append(parent.Name + '.');
 
 			writer.WriteLine($"partial {parent.Keyword} {parent.Name} {parent.Constraints}");
-			writer.WriteLine(value: '{');
+			writer.WriteLine('{');
 			writer.Indent++;
 			parentCount++;
 			parent = parent.Child;
 		}
 
-		writer.Write($"abstract partial record {unionModel.FullName} :");
-		writer.WriteLine(
-			unionModel.Members.Length > 0
-				? $" Union<{unionModel.FullName}, {unionModel.Members.JoinSelect(m => $"{unionModel.FullName}.{m.Name}")}>"
-				: $" Union<{unionModel.FullName}>"
-		);
+		writer.WriteLine($"abstract partial record {unionModel.FullName} : {unionModel.BaseUnion}");
 
-
-		writer.WriteLine(value: '{');
+		writer.WriteLine('{');
 		writer.Indent++;
 
 		writer.WriteLine($"private {unionModel.Name}() {{ }}");
@@ -109,17 +103,17 @@ public static class UnionSourceComposer
 			}
 
 		writer.Indent--;
-		writer.WriteLine(value: '}');
+		writer.WriteLine('}');
 
 		for (var i = 0; i < parentCount; i++)
 		{
 			writer.Indent--;
-			writer.WriteLine(value: '}');
+			writer.WriteLine('}');
 		}
 
 		writer.WriteLine();
 
-		if (options.GenerateAsyncExtensions || unionModel.GenerateAsyncExtensions)
+		if (options.GenerateAsyncExtensions)
 			WriteAsyncExtensions(
 				writer: writer,
 				unionModel: unionModel,
@@ -136,202 +130,22 @@ public static class UnionSourceComposer
 		string qualification
 	)
 	{
-		// Extension methods
 		writer.WriteLine($"public static class {unionModel.Name}Ex");
-		writer.WriteLine(value: '{');
+		writer.WriteLine('{');
 		writer.Indent++;
 
-		string matchTypeParams = unionModel.TypeParameters.Prepend("TOut").JoinString();
 		string fullyQualifiedName = qualification + unionModel.FullName;
 
-	#region Match
+		writer.WriteLine($"public static async Task<{unionModel.BaseUnion}> Union{unionModel.GenericDeclaration}(this Task<{fullyQualifiedName}> task)");
+		writer.WriteLine("=> await task.ConfigureAwait(false);");
 
-		// Task
-
-		// Match
-		writer.Write($"public static async Task<TOut> Match<{matchTypeParams}>(");
-		writer.Indent++;
-		writer.WriteLine($"this Task<{fullyQualifiedName}> task,");
 		writer.WriteLine(
-			$"{unionModel.Members.JoinSelect(m => $"Func<{qualification}{m.FullName}, TOut> {m.VariableName}")},"
+			$"public static async ValueTask<{unionModel.BaseUnion}> Union{unionModel.GenericDeclaration}(this ValueTask<{fullyQualifiedName}> valueTask)"
 		);
 
-		writer.WriteLine("bool continueOnCapturedContext = false)");
-		writer.WriteLine("=> (await task.ConfigureAwait(continueOnCapturedContext))");
-		writer.WriteLine($".Match({unionModel.Members.JoinSelect(m => m.VariableName)});");
-		writer.Indent--;
-		writer.WriteLine();
-
-		// MatchAsync
-		writer.Write($"public static async Task<TOut> MatchAsync<{matchTypeParams}>(");
-		writer.Indent++;
-		writer.WriteLine($"this Task<{fullyQualifiedName}> task,");
-		writer.WriteLine(
-			$"{unionModel.Members.JoinSelect(m => $"Func<{qualification}{m.FullName}, Task<TOut>> {m.VariableName}")},"
-		);
-
-		writer.WriteLine("bool continueOnCapturedContext = false)");
-		writer.WriteLine("=> await (await task.ConfigureAwait(continueOnCapturedContext))");
-		writer.WriteLine($".MatchAsync({unionModel.Members.JoinSelect(m => m.VariableName)})");
-		writer.WriteLine(".ConfigureAwait(continueOnCapturedContext);");
-		writer.Indent--;
-		writer.WriteLine();
-
-		// MatchAsyncValue
-		writer.Write($"public static async ValueTask<TOut> MatchAsyncValue<{matchTypeParams}>(");
-		writer.Indent++;
-		writer.WriteLine($"this Task<{fullyQualifiedName}> task,");
-		writer.WriteLine(
-			$"{unionModel.Members.JoinSelect(m => $"Func<{qualification}{m.FullName}, ValueTask<TOut>> {m.VariableName}")},"
-		);
-
-		writer.WriteLine("bool continueOnCapturedContext = false)");
-		writer.WriteLine("=> await (await task.ConfigureAwait(continueOnCapturedContext))");
-		writer.WriteLine($".MatchAsyncValue({unionModel.Members.JoinSelect(m => m.VariableName)})");
-		writer.WriteLine(".ConfigureAwait(continueOnCapturedContext);");
-		writer.Indent--;
-		writer.WriteLine();
-
-		// ValueTask
-
-		// Match
-		writer.Write($"public static async ValueTask<TOut> Match<{matchTypeParams}>(");
-		writer.Indent++;
-		writer.WriteLine($"this ValueTask<{fullyQualifiedName}> task,");
-		writer.WriteLine(
-			$"{unionModel.Members.JoinSelect(m => $"Func<{qualification}{m.FullName}, TOut> {m.VariableName}")},"
-		);
-
-		writer.WriteLine("bool continueOnCapturedContext = false)");
-		writer.WriteLine("=> (await task.ConfigureAwait(continueOnCapturedContext))");
-		writer.WriteLine($".Match({unionModel.Members.JoinSelect(m => m.VariableName)});");
-		writer.Indent--;
-		writer.WriteLine();
-
-		// MatchAsync
-		writer.Write($"public static async Task<TOut> MatchAsync<{matchTypeParams}>(");
-		writer.Indent++;
-		writer.WriteLine($"this ValueTask<{fullyQualifiedName}> task,");
-		writer.WriteLine(
-			$"{unionModel.Members.JoinSelect(m => $"Func<{qualification}{m.FullName}, Task<TOut>> {m.VariableName}")},"
-		);
-
-		writer.WriteLine("bool continueOnCapturedContext = false)");
-		writer.WriteLine("=> await (await task.ConfigureAwait(continueOnCapturedContext))");
-		writer.WriteLine($".MatchAsync({unionModel.Members.JoinSelect(m => m.VariableName)})");
-		writer.WriteLine(".ConfigureAwait(continueOnCapturedContext);");
-		writer.Indent--;
-		writer.WriteLine();
-
-		// MatchAsyncValue
-		writer.Write($"public static async ValueTask<TOut> MatchAsyncValue<{matchTypeParams}>(");
-		writer.Indent++;
-		writer.WriteLine($"this ValueTask<{fullyQualifiedName}> task,");
-		writer.WriteLine(
-			$"{unionModel.Members.JoinSelect(m => $"Func<{qualification}{m.FullName}, ValueTask<TOut>> {m.VariableName}")},"
-		);
-
-		writer.WriteLine("bool continueOnCapturedContext = false)");
-		writer.WriteLine("=> await (await task.ConfigureAwait(continueOnCapturedContext))");
-		writer.WriteLine($".MatchAsyncValue({unionModel.Members.JoinSelect(m => m.VariableName)})");
-		writer.WriteLine(".ConfigureAwait(continueOnCapturedContext);");
-		writer.Indent--;
-		writer.WriteLine();
-
-	#endregion
-
-
-	#region Switch
-
-		// Task
-
-		// Switch
-		writer.WriteLine($"public static async Task Switch{unionModel.GenericDeclaration}(");
-		writer.Indent++;
-		writer.WriteLine($"this Task<{fullyQualifiedName}> task,");
-		writer.WriteLine($"{unionModel.Members.JoinSelect(m => $"Action<{qualification}{m.FullName}> {m.VariableName}")},");
-		writer.WriteLine("bool continueOnCapturedContext = false)");
-		writer.WriteLine("=> (await task.ConfigureAwait(continueOnCapturedContext))");
-		writer.WriteLine($".Switch({unionModel.Members.JoinSelect(m => m.VariableName)});");
-		writer.Indent--;
-		writer.WriteLine();
-
-		// SwitchAsync
-		writer.WriteLine($"public static async Task SwitchAsync{unionModel.GenericDeclaration}(");
-		writer.Indent++;
-		writer.WriteLine($"this Task<{fullyQualifiedName}> task,");
-		writer.WriteLine(
-			$"{unionModel.Members.JoinSelect(m => $"Func<{qualification}{m.FullName}, Task> {m.VariableName}")},"
-		);
-
-		writer.WriteLine("bool continueOnCapturedContext = false)");
-		writer.WriteLine("=> await (await task.ConfigureAwait(continueOnCapturedContext))");
-		writer.WriteLine($".SwitchAsync({unionModel.Members.JoinSelect(m => m.VariableName)})");
-		writer.WriteLine(".ConfigureAwait(continueOnCapturedContext);");
-		writer.Indent--;
-		writer.WriteLine();
-
-		// SwitchAsyncValue
-		writer.WriteLine($"public static async ValueTask SwitchAsyncValue{unionModel.GenericDeclaration}(");
-		writer.Indent++;
-		writer.WriteLine($"this Task<{fullyQualifiedName}> task,");
-		writer.WriteLine(
-			$"{unionModel.Members.JoinSelect(m => $"Func<{qualification}{m.FullName}, ValueTask> {m.VariableName}")},"
-		);
-
-		writer.WriteLine("bool continueOnCapturedContext = false)");
-		writer.WriteLine("=> await (await task.ConfigureAwait(continueOnCapturedContext))");
-		writer.WriteLine($".SwitchAsyncValue({unionModel.Members.JoinSelect(m => m.VariableName)})");
-		writer.WriteLine(".ConfigureAwait(continueOnCapturedContext);");
-		writer.Indent--;
-		writer.WriteLine();
-
-		// ValueTask
-
-		// Switch
-		writer.WriteLine($"public static async ValueTask Switch{unionModel.GenericDeclaration}(");
-		writer.Indent++;
-		writer.WriteLine($"this ValueTask<{fullyQualifiedName}> task,");
-		writer.WriteLine($"{unionModel.Members.JoinSelect(m => $"Action<{qualification}{m.FullName}> {m.VariableName}")},");
-		writer.WriteLine("bool continueOnCapturedContext = false)");
-		writer.WriteLine("=> (await task.ConfigureAwait(continueOnCapturedContext))");
-		writer.WriteLine($".Switch({unionModel.Members.JoinSelect(m => m.VariableName)});");
-		writer.Indent--;
-		writer.WriteLine();
-
-		// SwitchAsync
-		writer.WriteLine($"public static async Task SwitchAsync{unionModel.GenericDeclaration}(");
-		writer.Indent++;
-		writer.WriteLine($"this ValueTask<{fullyQualifiedName}> task,");
-		writer.WriteLine(
-			$"{unionModel.Members.JoinSelect(m => $"Func<{qualification}{m.FullName}, Task> {m.VariableName}")},"
-		);
-
-		writer.WriteLine("bool continueOnCapturedContext = false)");
-		writer.WriteLine("=> await (await task.ConfigureAwait(continueOnCapturedContext))");
-		writer.WriteLine($".SwitchAsync({unionModel.Members.JoinSelect(m => m.VariableName)})");
-		writer.WriteLine(".ConfigureAwait(continueOnCapturedContext);");
-		writer.Indent--;
-		writer.WriteLine();
-
-		// SwitchAsyncValue
-		writer.WriteLine($"public static async ValueTask SwitchAsyncValue{unionModel.GenericDeclaration}(");
-		writer.Indent++;
-		writer.WriteLine($"this ValueTask<{fullyQualifiedName}> task,");
-		writer.WriteLine(
-			$"{unionModel.Members.JoinSelect(m => $"Func<{qualification}{m.FullName}, ValueTask> {m.VariableName}")},"
-		);
-
-		writer.WriteLine("bool continueOnCapturedContext = false)");
-		writer.WriteLine("=> await (await task.ConfigureAwait(continueOnCapturedContext))");
-		writer.WriteLine($".SwitchAsyncValue({unionModel.Members.JoinSelect(m => m.VariableName)})");
-		writer.WriteLine(".ConfigureAwait(continueOnCapturedContext);");
-		writer.Indent--;
-		writer.WriteLine();
-
-	#endregion
+		writer.WriteLine("=> await valueTask.ConfigureAwait(false);");
 
 		writer.Indent--;
-		writer.WriteLine(value: '}');
+		writer.WriteLine('}');
 	}
 }

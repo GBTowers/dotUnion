@@ -9,7 +9,7 @@ public record FakeUnion(int Arity)
 		: Enumerable.Range(start: 1, count: Arity).Select(i => new ArityMember(i)).ToArray();
 
 	private const char BaseTypeParameter = 'T';
-	private string TypeParameters => ArityMembers.Select(m => m.Name).Prepend(BaseTypeParameter.ToString()).JoinString();
+	public string TypeParameters => ArityMembers.Select(m => m.Name).Prepend(BaseTypeParameter.ToString()).JoinString();
 	public string Declaration => "Union" + '<' + TypeParameters + '>';
 	public string MatchTypeParams => "TOut, " + TypeParameters;
 

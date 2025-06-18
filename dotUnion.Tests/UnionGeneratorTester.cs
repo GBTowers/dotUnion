@@ -1,3 +1,4 @@
+using System.Reflection.Metadata;
 using dotUnion.Attributes;
 using dotUnion.SourceGenerator;
 using Microsoft.CodeAnalysis;
@@ -14,7 +15,8 @@ public static class UnionGeneratorTester
 		IEnumerable<PortableExecutableReference> references =
 		[
 			MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-			MetadataReference.CreateFromFile(typeof(UnionAttribute).Assembly.Location)
+			MetadataReference.CreateFromFile(typeof(UnionAttribute).Assembly.Location),
+			MetadataReference.CreateFromFile(typeof(UnionAttribute).BaseType!.Assembly.Location)
 		];
 
 		var compilation = CSharpCompilation.Create(

@@ -8,7 +8,6 @@ public sealed record UnionTarget(
 	string Name,
 	EquatableArray<UnionTargetMember> Members,
 	EquatableArray<string> TypeParameters,
-	bool GenerateAsyncExtensions,
 	EquatableArray<string> UsingDirectives,
 	ParentType? ParentType
 )
@@ -17,4 +16,9 @@ public sealed record UnionTarget(
 		=> TypeParameters.JoinString() is not { Length: > 0 } parameters ? "" : $"<{parameters}>";
 
 	public string FullName => Name + GenericDeclaration;
+
+	public string BaseUnion
+		=> Members.Length > 0
+			? $"Union<{FullName}, {Members.JoinSelect(m => $"{FullName}.{m.Name}")}>"
+			: $"Union<{FullName}>";
 }

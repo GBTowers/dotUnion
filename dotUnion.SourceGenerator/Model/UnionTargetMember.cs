@@ -5,7 +5,6 @@ namespace dotUnion.SourceGenerator.Model;
 
 public sealed record UnionTargetMember(
 	string Name,
-	string ParentName,
 	RecordConstructor? Constructor
 )
 {
@@ -16,7 +15,6 @@ public sealed record UnionTargetMember(
 
 	public string VariableName => Name.FirstCharToLower()!;
 
-	public string FullName => ParentName + '.' + Name;
 }
 
 public sealed record RecordConstructor(EquatableArray<ConstructorParameter> Parameters)

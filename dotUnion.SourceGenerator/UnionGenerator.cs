@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using dotUnion.Attributes;
 using dotUnion.SourceGenerator.Extensions;
 using dotUnion.SourceGenerator.Composers;
@@ -10,7 +9,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Text;
 
 namespace dotUnion.SourceGenerator;
 
@@ -22,7 +20,8 @@ public sealed class UnionGenerator : IIncrementalGenerator
 
 	public void Initialize(IncrementalGeneratorInitializationContext context)
 	{
-		IncrementalValueProvider<GeneratorOptions> options = context.AnalyzerConfigOptionsProvider.Select(ParseOptions);
+		IncrementalValueProvider<GeneratorOptions> options = context.AnalyzerConfigOptionsProvider.Select(ParseOptions)
+		.WithComparer(EqualityComparer<GeneratorOptions>.Default);
 
 		IncrementalValuesProvider<UnionTarget> pipeline = context.SyntaxProvider.ForAttributeWithMetadataName(
 				fullyQualifiedMetadataName: typeof(UnionAttribute).FullName ?? FullyQualifiedAttributeName,
@@ -32,28 +31,25 @@ public sealed class UnionGenerator : IIncrementalGenerator
 		.Where(u => u is not null)!;
 
 		IncrementalValuesProvider<FakeUnion> unions = pipeline.Collect()
-		.SelectMany((targets, _) => targets.Where(u => u.Members.Length > 0)
-			.Select(u => u.Members.Length)
+		.SelectMany((targets, _) => targets.FilterSelect(u => u.Members.Length > 0, u => u.Members.Length)
 			.Distinct()
 			.Select(arity => new FakeUnion(arity))
 			);
 
-		context.RegisterSourceOutput(source: unions, action: AritySourceComposer.BuildArity);
+		context.RegisterSourceOutput(source: unions.Combine(options), action: AritySourceComposer.BuildArity);
 
 		context.RegisterSourceOutput(source: pipeline.Combine(options), action: UnionSourceComposer.BuildUnion);
 	}
 
-	private static GeneratorOptions ParseOptions(AnalyzerConfigOptionsProvider options, CancellationToken token)
-	{
-		token.ThrowIfCancellationRequested();
-		bool generateAsyncExtensions = options.GlobalOptions.TryGetValue(
-				key: AsyncExtensionsOption,
-				value: out string? value
-			)
-		&& value.ToLowerInvariant() is "enable" or "enabled" or "true";
+	private static GeneratorOptions ParseOptions(AnalyzerConfigOptionsProvider options, CancellationToken _)
+		=> new(
+			options.GlobalOptions.TryGetValue(key: AsyncExtensionsOption, value: out string? value) && IsFeatureEnabled(value)
+		);
 
-		return new GeneratorOptions(generateAsyncExtensions);
-	}
+	private static bool IsFeatureEnabled(string property)
+		=> StringComparer.OrdinalIgnoreCase.Equals(x: "enable", property)
+		|| StringComparer.OrdinalIgnoreCase.Equals(x: "enabled", property)
+		|| StringComparer.OrdinalIgnoreCase.Equals(x: "true", property);
 
 	private static UnionTarget? SemanticTransform(GeneratorAttributeSyntaxContext context, CancellationToken token)
 	{
@@ -65,17 +61,11 @@ public sealed class UnionGenerator : IIncrementalGenerator
 
 		if (!allParentsArePartial) return null;
 
-		bool generateAsyncExtensions = context.Attributes
-		.FirstOrDefault(attribute => attribute.AttributeClass?.Name == nameof(UnionAttribute))
-		?.NamedArguments.FirstOrDefault(x => x.Key == nameof(UnionAttribute.GenerateAsyncExtensions))
-		.Value.Value as bool? is true;
-		
 		return new UnionTarget(
 			Namespace: context.TargetSymbol.ContainingNamespace.ToDisplayString(),
 			Name: context.TargetSymbol.Name,
 			Members: GetUnionTargetMembers(context, candidate),
 			TypeParameters: ExtractTypeParameters(candidate),
-			GenerateAsyncExtensions: generateAsyncExtensions,
 			UsingDirectives: ExtractUsings(context.TargetNode),
 			ParentType: parentType
 		);
@@ -92,7 +82,7 @@ public sealed class UnionGenerator : IIncrementalGenerator
 		{
 			// Union type can only have record members
 			if (memberCandidate is not RecordDeclarationSyntax member) continue;
-			
+
 			// Union type can only have public members
 			if (member.IsNonPublic()) continue;
 
@@ -101,19 +91,13 @@ public sealed class UnionGenerator : IIncrementalGenerator
 
 			// Union type cannot have non interface base
 			if (member.HasNonInterfaceBaseType(context.SemanticModel)) continue;
-			
+
 			// Can only generate code for partial members
 			if (!member.Modifiers.Any(SyntaxKind.PartialKeyword)) continue;
 
 			RecordConstructor? constructor = GetMemberDefaultConstructor(member);
 
-			members.Add(
-				new UnionTargetMember(
-					Name: member.Identifier.Text,
-					ParentName: context.TargetNode.ToFullString(),
-					Constructor: constructor
-				)
-			);
+			members.Add(new UnionTargetMember(Name: member.Identifier.Text, Constructor: constructor));
 		}
 
 		return members.ToImmutableArray();

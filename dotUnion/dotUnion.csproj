@@ -8,7 +8,7 @@
 		<PackageId>dotUnion</PackageId>
 		<Authors>GBTowers</Authors>
 		<Product>dotUnion</Product>
-		<Version>1.0.0-alpha</Version>
+		<Version>1.0.0-alpha21</Version>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -19,18 +19,17 @@
 	<ItemGroup>
 		<ProjectReference Include="..\dotUnion.Analyzers\dotUnion.Analyzers\dotUnion.Analyzers.csproj" PrivateAssets="All"/>
 		<ProjectReference Include="..\dotUnion.SourceGenerator\dotUnion.SourceGenerator.csproj" PrivateAssets="All"/>
-		<None Update="dotUnion.props" Visible="false" Pack="true" PackagePath="build"/>
 		<ProjectReference Include="..\dotUnion.Analyzers\dotUnion.CodeFixes\dotUnion.CodeFixes.csproj" PrivateAssets="All"/>
 		<None Update="README.md">
 		  <Pack>true</Pack>
 		  <PackagePath>\</PackagePath>
 		</None>
+		<None Update="dotUnion.props" Pack="true" PackagePath="build" />
+
 	</ItemGroup>
 
 
 	<ItemGroup>
-		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
-
 		<None Include="$(OutputPath)\dotUnion.SourceGenerator.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
 		<None Include="$(OutputPath)\dotUnion.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
 		<None Include="$(OutputPath)\dotUnion.CodeFixes.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
