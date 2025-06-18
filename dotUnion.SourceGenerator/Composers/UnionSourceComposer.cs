@@ -136,11 +136,14 @@ public static class UnionSourceComposer
 
 		string fullyQualifiedName = qualification + unionModel.FullName;
 
-		writer.WriteLine($"public static async Task<{unionModel.BaseUnion}> Union{unionModel.GenericDeclaration}(this Task<{fullyQualifiedName}> task)");
+		writer.WriteLine(
+			$"public static async Task<{unionModel.FullyQualifiedBaseUnion(qualification)}> Union{unionModel.GenericDeclaration}(this Task<{fullyQualifiedName}> task)"
+		);
+
 		writer.WriteLine("=> await task.ConfigureAwait(false);");
 
 		writer.WriteLine(
-			$"public static async ValueTask<{unionModel.BaseUnion}> Union{unionModel.GenericDeclaration}(this ValueTask<{fullyQualifiedName}> valueTask)"
+			$"public static async ValueTask<{unionModel.FullyQualifiedBaseUnion(qualification)}> Union{unionModel.GenericDeclaration}(this ValueTask<{fullyQualifiedName}> valueTask)"
 		);
 
 		writer.WriteLine("=> await valueTask.ConfigureAwait(false);");

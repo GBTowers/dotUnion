@@ -21,4 +21,9 @@ public sealed record UnionTarget(
 		=> Members.Length > 0
 			? $"Union<{FullName}, {Members.JoinSelect(m => $"{FullName}.{m.Name}")}>"
 			: $"Union<{FullName}>";
+
+	public string FullyQualifiedBaseUnion(string qualification)
+		=> Members.Length > 0
+			? $"Union<{qualification}{FullName}, {Members.JoinSelect(m => $"{qualification}{FullName}.{m.Name}")}>"
+			: $"Union<{qualification}{FullName}>";
 }
