@@ -24,11 +24,13 @@ public partial class Hello
 public class Playground
 {
 	[Fact]
-	public void Play()
+	public async Task Play()
 	{
 		Notification notification = new Notification.Bye(new Color());
-		Task<string> result = Task.FromResult("Hello");
+		Task<Notification> notificationTask = Task.FromResult(notification);
 
-		Task<string> x = notification.MatchAsync(async b => await result);
+		_ = await notificationTask.Union().Match(bye => bye.Color);
+
+
 	}
 }
